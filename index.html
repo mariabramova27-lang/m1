@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Алгебра 7 класс — Интерактив с автопроверкой | Мягкая математика</title>
+<style>
+  :root{
+    --turq:#2AB7A9; --gold:#F4A261; --dark:#0F1A2E;
+    --white:#fff; --gray:#8AA8A5; --ok:#3ecf8e; --err:#ff6b6b;
+    --purple:#8B5CF6; --blue:#3B82F6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'Open Sans','Segoe UI',system-ui,sans-serif;
+    background:radial-gradient(circle at 20% 10%, #1b2b4a 0%, var(--dark) 60%);
+    color:var(--white);min-height:100vh;padding:14px;line-height:1.5;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4{font-family:'Montserrat','Segoe UI',sans-serif;letter-spacing:.5px;}
+  .app{max-width:1100px;margin:0 auto;}
+
+  /* HUD */
+  .hud{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;flex-wrap:wrap;margin-bottom:12px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(138,168,165,.2);
+    border-radius:14px;padding:10px 16px;
+  }
+  .hud-brand{display:flex;align-items:center;gap:10px;}
+  .hud-logo{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,var(--turq),var(--gold));
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;box-shadow:0 4px 12px rgba(42,183,169,.4);
+  }
+  .hud-brand .t{font-size:14px;font-weight:800;color:var(--turq);}
+  .hud-brand .s{font-size:11px;color:var(--gray);}
+  .hud-stats{display:flex;gap:10px;flex-wrap:wrap;}
+  .stat{
+    background:rgba(255,255,255,.05);border:1px solid rgba(138,168,165,.25);
+    border-radius:10px;padding:6px 14px;text-align:center;min-width:80px;
+  }
+  .stat .v{font-size:18px;font-weight:800;color:var(--gold);display:block;}
+  .stat .l{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;}
+
+  /* Общий прогресс */
+  .progress-wrap{
+    margin-bottom:14px;padding:10px 16px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(138,168,165,.2);
+    border-radius:12px;
+  }
+  .progress-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:8px;font-size:13px;color:var(--gray);
+  }
+  .progress-header strong{color:var(--gold);}
+  .progress-bar{
+    height:8px;background:rgba(0,0,0,.35);border-radius:6px;
+    overflow:hidden;position:relative;border:1px solid rgba(42,183,169,.2);
+  }
+  .progress-fill{
+    height:100%;background:linear-gradient(90deg,var(--turq),var(--gold));
+    width:0%;transition:width .5s ease;border-radius:6px;
+    position:relative;overflow:hidden;
+  }
+  .progress-fill::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+    animation:shine 2s infinite;
+  }
+  @keyframes shine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+  /* Табы */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .tab{
+    background:rgba(255,255,255,.05);border:2px solid rgba(138,168,165,.3);
+    border-radius:12px;padding:10px 16px;cursor:pointer;transition:.2s;
+    font-size:13px;color:var(--gray);font-weight:600;
+    display:flex;align-items:center;gap:6px;
+  }
+  .tab:hover{border-color:var(--turq);color:var(--white);}
+  .tab.active{
+    background:linear-gradient(135deg,var(--turq),#38d0c0);
+    border-color:var(--turq);color:var(--dark);
+    box-shadow:0 4px 14px rgba(42,183,169,.4);
+  }
+  .tab .cnt{
+    background:rgba(0,0,0,.25);padding:1px 8px;border-radius:10px;
+    font-size:10px;font-weight:800;
+  }
+  .tab.active .cnt{background:rgba(0,0,0,.2);color:var(--dark);}
+
+  /* Панель */
+  .panel{
+    background:rgba(255,255,255,.04);border:1px solid rgba(138,168,165,.25);
+    border-radius:18px;padding:18px;
+    animation:fade .4s ease;
+  }
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .panel h2{color:var(--turq);font-size:20px;margin-bottom:4px;}
+  .panel .sub{color:var(--gray);font-size:13px;margin-bottom:16px;}
+
+  /* Блок задач */
+  .block{margin-bottom:20px;}
+  .block-title{
+    font-size:12px;text-transform:uppercase;letter-spacing:1.5px;
+    font-weight:800;color:var(--gold);margin-bottom:10px;
+    padding-bottom:6px;border-bottom:1px dashed rgba(138,168,165,.3);
+    display:flex;align-items:center;gap:8px;
+  }
+  .block-title .bcount{
+    background:rgba(244,162,97,.2);padding:1px 8px;border-radius:10px;
+    font-size:10px;font-weight:700;
+  }
+
+  /* Задача */
+  .task{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(138,168,165,.2);
+    border-radius:12px;padding:12px 14px;margin-bottom:8px;
+    transition:.2s;
+    display:grid;grid-template-columns:auto 1fr;gap:12px;
+    align-items:start;
+  }
+  .task.solved{
+    border-color:var(--ok);
+    background:rgba(62,207,142,.06);
+  }
+  .task-n{
+    background:var(--turq);color:var(--dark);
+    width:30px;height:30px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:13px;flex-shrink:0;
+    transition:.2s;
+  }
+  .task.solved .task-n{
+    background:var(--ok);color:var(--dark);
+  }
+  .task-body{min-width:0;flex:1;}
+  .task-q{
+    font-size:14px;line-height:1.55;margin-bottom:10px;
+  }
+  .task-q .math{
+    font-family:'Courier New',monospace;
+    background:rgba(0,0,0,.3);
+    padding:2px 8px;border-radius:5px;
+    font-size:14px;display:inline-block;
+    color:#bfffe0;
+  }
+  .task-q .blank{
+    display:inline-block;
+    border-bottom:1.5pt solid var(--gold);
+    min-width:100px;height:14px;vertical-align:middle;
+    margin:0 4px;
+  }
+  .task-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .task-input{
+    background:rgba(0,0,0,.3);border:1px solid rgba(138,168,165,.4);
+    border-radius:10px;padding:10px 14px;color:var(--white);
+    font-size:14px;font-family:'Courier New',monospace;
+    flex:1;min-width:140px;transition:.2s;
+  }
+  .task-input:focus{outline:none;border-color:var(--turq);box-shadow:0 0 0 3px rgba(42,183,169,.2);}
+  .task-input:disabled{opacity:.7;background:rgba(62,207,142,.08);}
+  .task-input.err{border-color:var(--err);animation:shake .4s;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-5px)}
+    75%{transform:translateX(5px)}
+  }
+  .check-btn{
+    background:linear-gradient(135deg,var(--turq),#38d0c0);
+    color:var(--dark);border:none;border-radius:10px;
+    padding:10px 18px;font-weight:700;font-size:13px;
+    cursor:pointer;font-family:inherit;transition:.2s;
+    white-space:nowrap;
+  }
+  .check-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(42,183,169,.4);}
+  .check-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .fb{
+    margin-top:8px;font-size:13px;font-weight:600;
+    padding:8px 12px;border-radius:8px;
+    display:none;
+  }
+  .fb.show{display:block;animation:fade .3s ease;}
+  .fb.ok{background:rgba(62,207,142,.15);color:var(--ok);}
+  .fb.err{background:rgba(255,107,107,.12);color:var(--err);}
+  .fb .hint{
+    display:block;margin-top:4px;font-size:12px;
+    color:var(--gray);font-weight:500;font-style:italic;
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);
+    background:linear-gradient(135deg,var(--gold),#ffce8a);color:var(--dark);
+    padding:12px 24px;border-radius:14px;font-weight:700;font-size:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+    transition:transform .4s cubic-bezier(.4,0,.2,1);
+    z-index:999;white-space:nowrap;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.ok{background:linear-gradient(135deg,var(--ok),#7ee5aa);}
+  .toast.xp{background:linear-gradient(135deg,var(--turq),#38d0c0);}
+
+  /* Финальный экран */
+  .final{
+    text-align:center;padding:30px 20px;
+    background:linear-gradient(135deg,rgba(244,162,97,.12),rgba(42,183,169,.08));
+    border:2px solid var(--gold);border-radius:20px;
+    margin-top:16px;
+  }
+  .final .trophy{font-size:72px;margin-bottom:12px;animation:pop .9s ease;}
+  @keyframes pop{
+    0%{transform:scale(0) rotate(-180deg);}
+    70%{transform:scale(1.2) rotate(10deg);}
+    100%{transform:scale(1) rotate(0);}
+  }
+  .final h2{color:var(--gold);font-size:24px;margin-bottom:10px;}
+  .final .score-big{font-size:48px;font-weight:900;color:var(--turq);margin:14px 0 4px;}
+
+  /* Кнопка сброса */
+  .btn{
+    background:linear-gradient(135deg,var(--turq),#38d0c0);
+    color:var(--dark);border:none;border-radius:12px;
+    padding:10px 20px;font-weight:700;font-size:13px;
+    cursor:pointer;font-family:inherit;transition:.2s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(42,183,169,.4);}
+  .btn.ghost{background:transparent;color:var(--white);border:1px solid rgba(138,168,165,.5);}
+  .btn.ghost:hover{background:rgba(255,255,255,.08);}
+
+  .reset-row{text-align:center;margin-top:16px;}
+
+  @media(max-width:600px){
+    .hud{flex-direction:column;align-items:stretch;}
+    .hud-stats{justify-content:center;}
+    .task-q{font-size:13px;}
+    .check-btn{padding:10px 14px;font-size:12px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-brand">
+      <div class="hud-logo">∑</div>
+      <div>
+        <div class="t">Алгебра 7 класс</div>
+        <div class="s">Интерактив с автопроверкой</div>
+      </div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat"><span class="v" id="hScore">0</span><span class="l">XP</span></div>
+      <div class="stat"><span class="v" id="hSolved">0</span><span class="l">Решено</span></div>
+      <div class="stat"><span class="v" id="hErrors">0</span><span class="l">Ошибки</span></div>
+    </div>
+  </div>
+
+  <!-- Общий прогресс -->
+  <div class="progress-wrap">
+    <div class="progress-header">
+      <span>Общий прогресс</span>
+      <span><strong id="pLabel">0 / 85</strong></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="pFill"></div></div>
+  </div>
+
+  <!-- Табы -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Сцена -->
+  <div id="stage"></div>
+
+  <div class="reset-row">
+    <button class="btn ghost" onclick="resetAll()">🔄 Сбросить весь прогресс</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   ДАННЫЕ ЗАДАЧ (Аналогичные рабочим листам, для ДЗ)
+   ============================================================ */
+
+const SHEETS = {
+  sheet1: {
+    icon:'📘',
+    name:'Лист 1. Выражения и уравнения',
+    blocks: [
+      {
+        name:'📖 Теория (вставь пропуск)',
+        type:'text',
+        tasks:[
+          {
+            q:'Чтобы привести подобные слагаемые, нужно сложить их <span class="blank"></span> и умножить на общую буквенную часть.',
+            ans:['коэффициенты','коэффициент'],
+            hint:'Это числа перед буквами'
+          },
+          {
+            q:'При раскрытии скобок, перед которыми стоит знак «минус», знаки слагаемых в скобках <span class="blank"></span>.',
+            ans:['меняются на противоположные','меняются на противоположный','меняются'],
+            hint:'«Плюс на минус даёт минус»'
+          },
+          {
+            q:'Корень уравнения — это значение переменной, при котором уравнение обращается в верное <span class="blank"></span>.',
+            ans:['равенство'],
+            hint:'Числовое ...'
+          }
+        ]
+      },
+      {
+        name:'✏️ Упростите выражение',
+        type:'expr',
+        tasks:[
+          {q:'<span class="math">4a + 6a − 3a</span>', ans:['7a'], hint:'Сложи коэффициенты: 4+6−3'},
+          {q:'<span class="math">8x − 3x + 5x</span>', ans:['10x'], hint:'8−3+5'},
+          {q:'<span class="math">3(2y − 5) + 4y</span>', ans:['10y−15','-15+10y'], hint:'6y−15+4y'},
+          {q:'<span class="math">7b − 3(b + 4)</span>', ans:['4b−12','-12+4b'], hint:'7b−3b−12'},
+          {q:'<span class="math">5a + 2b − 3a + 4b</span>', ans:['2a+6b','6b+2a'], hint:'Собери a и b отдельно'},
+          {q:'<span class="math">6(x + 3) − 4x</span>', ans:['2x+18','18+2x'], hint:'6x+18−4x'},
+          {q:'<span class="math">9m − 4(2m + 3)</span>', ans:['m−12','-12+m'], hint:'9m−8m−12'},
+          {q:'<span class="math">3(2a − 5b) + 4(3a + b)</span>', ans:['18a−11b','-11b+18a'], hint:'6a−15b+12a+4b'},
+          {q:'<span class="math">5(2x − 3) − 4(x + 2)</span>', ans:['6x−23','-23+6x'], hint:'10x−15−4x−8'},
+          {q:'<span class="math">4(2x − 1) − 3(x + 2)</span>', ans:['5x−10','-10+5x'], hint:'8x−4−3x−6'}
+        ]
+      },
+      {
+        name:'🎯 Решите уравнение',
+        type:'number',
+        tasks:[
+          {q:'<span class="math">5x − 9 = 26</span> → x =', ans:7, hint:'5x = 35'},
+          {q:'<span class="math">4(x + 3) = 28</span> → x =', ans:4, hint:'x + 3 = 7'},
+          {q:'<span class="math">6x + 5 = 3x + 20</span> → x =', ans:5, hint:'3x = 15'},
+          {q:'<span class="math">3(2x − 1) = 5x + 7</span> → x =', ans:10, hint:'6x−3 = 5x+7'},
+          {q:'<span class="math">8x − 5 = 5x + 16</span> → x =', ans:7, hint:'3x = 21'},
+          {q:'<span class="math">4(x − 2) = 2x + 6</span> → x =', ans:7, hint:'4x−8 = 2x+6'},
+          {q:'<span class="math">5x + 4 = 3(x + 6)</span> → x =', ans:7, hint:'5x+4 = 3x+18'},
+          {q:'<span class="math">7x − 8 = 3(x + 4)</span> → x =', ans:5, hint:'7x−8 = 3x+12'},
+          {q:'<span class="math">9 − 3x = 4x − 12</span> → x =', ans:3, hint:'21 = 7x'},
+          {q:'<span class="math">3(x + 4) − 5 = 4(x − 1)</span> → x =', ans:11, hint:'3x+7 = 4x−4'}
+        ]
+      },
+      {
+        name:'📊 Статистика',
+        type:'number',
+        tasks:[
+          {q:'Ряд чисел: 3, 5, 5, 8, 9. Среднее арифметическое =', ans:6, hint:'Сумма / количество'},
+          {q:'Для ряда из предыдущей задачи мода =', ans:5, hint:'Самое частое значение'},
+          {q:'Ряд чисел: 2, 3, 3, 5, 7. Среднее арифметическое =', ans:4, hint:'20/5'},
+          {q:'Для ряда из предыдущей задачи мода =', ans:3, hint:'Встречается дважды'},
+          {q:'Ряд чисел: 1, 3, 5, 7, 9. Среднее арифметическое =', ans:5, hint:'25/5'},
+          {q:'Для ряда из предыдущей задачи медиана =', ans:5, hint:'Среднее число после сортировки'}
+        ]
+      }
+    ]
+  },
+
+  sheet2: {
+    icon:'📗',
+    name:'Лист 2. Степень',
+    blocks: [
+      {
+        name:'🔢 Вычислите',
+        type:'number',
+        tasks:[
+          {q:'<span class="math">2⁶</span> =', ans:64, hint:'2·2·2·2·2·2'},
+          {q:'<span class="math">(−4)²</span> =', ans:16, hint:'Минус на минус = плюс'},
+          {q:'<span class="math">7⁰</span> =', ans:1, hint:'Любое число в нулевой = 1'},
+          {q:'<span class="math">10⁴</span> =', ans:10000, hint:'Единица и 4 нуля'},
+          {q:'<span class="math">3⁵</span> =', ans:243, hint:'3·3·3·3·3'},
+          {q:'<span class="math">(−2)⁴</span> =', ans:16, hint:'Чётная степень — плюс'},
+          {q:'<span class="math">(−1)⁷</span> =', ans:-1, hint:'Нечётная степень'},
+          {q:'<span class="math">(−1)⁸</span> =', ans:1, hint:'Чётная степень'},
+          {q:'<span class="math">2⁷</span> =', ans:128, hint:'2⁶·2'},
+          {q:'<span class="math">(−3)³</span> =', ans:-27, hint:'Нечётная степень — минус'}
+        ]
+      },
+      {
+        name:'⚙️ Упростите (свойства степени)',
+        type:'expr',
+        tasks:[
+          {q:'<span class="math">a⁴ · a⁶</span> =', ans:['a¹⁰','a^10','a10'], hint:'Степени складываются'},
+          {q:'<span class="math">x⁹ : x⁵</span> =', ans:['x⁴','x^4','x4'], hint:'Степени вычитаются'},
+          {q:'<span class="math">(b³)⁴</span> =', ans:['b¹²','b^12','b12'], hint:'Степени перемножаются'},
+          {q:'<span class="math">(3a)²</span> =', ans:['9a²','9a^2','9a2'], hint:'Возведи 3 в квадрат'},
+          {q:'<span class="math">y⁵ · y³</span> =', ans:['y⁸','y^8','y8'], hint:'5+3'},
+          {q:'<span class="math">(2x)³</span> =', ans:['8x³','8x^3','8x3'], hint:'2³=8'},
+          {q:'<span class="math">m⁸ : m²</span> =', ans:['m⁶','m^6','m6'], hint:'8−2'},
+          {q:'<span class="math">(c⁵)²</span> =', ans:['c¹⁰','c^10','c10'], hint:'5·2'},
+          {q:'<span class="math">(−3b)²</span> =', ans:['9b²','9b^2','9b2'], hint:'Минус исчезнет'},
+          {q:'<span class="math">x⁰</span> (при x ≠ 0) =', ans:['1'], hint:'Всегда 1'}
+        ]
+      },
+      {
+        name:'📐 Одночлены',
+        type:'expr',
+        tasks:[
+          {q:'<span class="math">4x³ · 2x⁵</span> =', ans:['8x⁸','8x^8','8x8'], hint:'4·2 и 3+5'},
+          {q:'<span class="math">(3²)²</span> =', ans:['81'], hint:'3⁴'},
+          {q:'<span class="math">5a³b · 2ab²</span> =', ans:['10a⁴b³','10a^4b^3','10a4b3'], hint:'5·2, a:3+1, b:1+2'},
+          {q:'<span class="math">(−2x³y)²</span> =', ans:['4x⁶y²','4x^6y^2','4x6y2'], hint:'Минус уйдёт, всё удвоится'},
+          {q:'<span class="math">6a · 3a²</span> =', ans:['18a³','18a^3','18a3'], hint:'18a³'},
+          {q:'<span class="math">(−4m³n)²</span> =', ans:['16m⁶n²','16m^6n^2','16m6n2'], hint:'(-4)²=16'}
+        ]
+      }
+    ]
+  },
+
+  sheet3: {
+    icon:'📙',
+    name:'Лист 3. Формулы сокращённого умножения',
+    blocks: [
+      {
+        name:'➕ Раскройте скобки',
+        type:'expr',
+        tasks:[
+          {q:'<span class="math">(x + 5)²</span> =', ans:['x²+10x+25','x^2+10x+25','x2+10x+25'], hint:'a²+2ab+b²'},
+          {q:'<span class="math">(a − 4)²</span> =', ans:['a²−8a+16','a^2-8a+16','a2-8a+16','a²-8a+16'], hint:'a²−2ab+b²'},
+          {q:'<span class="math">(3y + 2)²</span> =', ans:['9y²+12y+4','9y^2+12y+4','9y2+12y+4'], hint:'(3y)² + 2·3y·2 + 2²'},
+          {q:'<span class="math">(2b − 5)²</span> =', ans:['4b²−20b+25','4b^2-20b+25','4b2-20b+25'], hint:'(2b)² − 2·2b·5 + 25'},
+          {q:'<span class="math">(x + 6)(x − 6)</span> =', ans:['x²−36','x^2-36','x2-36','x²-36'], hint:'Разность квадратов'},
+          {q:'<span class="math">(3a − 4)(3a + 4)</span> =', ans:['9a²−16','9a^2-16','9a2-16','9a²-16'], hint:'(3a)² − 4²'},
+          {q:'<span class="math">(4x + 3)²</span> =', ans:['16x²+24x+9','16x^2+24x+9','16x2+24x+9'], hint:'(4x)² + 2·4x·3 + 9'},
+          {q:'<span class="math">(x − 9)²</span> =', ans:['x²−18x+81','x^2-18x+81','x2-18x+81'], hint:'2·x·9=18x'},
+          {q:'<span class="math">(2m + 5n)²</span> =', ans:['4m²+20mn+25n²','4m^2+20mn+25n^2','4m2+20mn+25n2'], hint:'(2m)² + 2·2m·5n + (5n)²'},
+          {q:'<span class="math">(7x − 3y)(7x + 3y)</span> =', ans:['49x²−9y²','49x^2-9y^2','49x2-9y2'], hint:'(7x)² − (3y)²'}
+        ]
+      },
+      {
+        name:'🔍 Разложите на множители',
+        type:'expr',
+        tasks:[
+          {q:'<span class="math">x² − 25</span> =', ans:['(x−5)(x+5)','(x+5)(x−5)','(x-5)(x+5)','(x+5)(x-5)'], hint:'Разность квадратов'},
+          {q:'<span class="math">9a² − 16</span> =', ans:['(3a−4)(3a+4)','(3a+4)(3a−4)','(3a-4)(3a+4)','(3a+4)(3a-4)'], hint:'(3a)² − 4²'},
+          {q:'<span class="math">a² + 10a + 25</span> =', ans:['(a+5)²','(a+5)^2','(a+5)2'], hint:'Квадрат суммы'},
+          {q:'<span class="math">b² − 12b + 36</span> =', ans:['(b−6)²','(b-6)²','(b-6)^2','(b-6)2','(b−6)^2'], hint:'(b−6)²'},
+          {q:'<span class="math">16x² − 9</span> =', ans:['(4x−3)(4x+3)','(4x+3)(4x−3)','(4x-3)(4x+3)','(4x+3)(4x-3)'], hint:'(4x)² − 3²'},
+          {q:'<span class="math">x² + 12x + 36</span> =', ans:['(x+6)²','(x+6)^2','(x+6)2'], hint:'Квадрат суммы'},
+          {q:'<span class="math">81 − m²</span> =', ans:['(9−m)(9+m)','(9+m)(9−m)','(9-m)(9+m)','(9+m)(9-m)'], hint:'Разность квадратов'},
+          {q:'<span class="math">y² − 8y + 16</span> =', ans:['(y−4)²','(y-4)²','(y-4)^2','(y-4)2'], hint:'Квадрат разности'},
+          {q:'<span class="math">1 − 9x²</span> =', ans:['(1−3x)(1+3x)','(1+3x)(1−3x)','(1-3x)(1+3x)','(1+3x)(1-3x)'], hint:'1² − (3x)²'},
+          {q:'<span class="math">36a² + 12a + 1</span> =', ans:['(6a+1)²','(6a+1)^2','(6a+1)2'], hint:'(6a+1)²'}
+        ]
+      }
+    ]
+  }
+};
+
+/* ============================================================
+   СОСТОЯНИЕ
+   ============================================================ */
+const state = {
+  currentSheet: 'sheet1',
+  progress: {},     // {"sheet1-block-task": true}
+  score: 0,
+  errors: 0,
+  solvedCount: 0,
+  audioCtx: null
+};
+
+/* ============================================================
+   ЗВУК
+   ============================================================ */
+function beep(freq, dur=0.08, type='sine', vol=0.06){
+  try{
+    if(!state.audioCtx){ state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    const ctx = state.audioCtx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type; osc.frequency.value = freq; gain.gain.value = vol;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.stop(ctx.currentTime + dur);
+  }catch(e){}
+}
+function soundOk(){ beep(660, 0.08); setTimeout(()=>beep(880, 0.1), 70); }
+function soundErr(){ beep(200, 0.15, 'sawtooth', 0.05); }
+
+/* ============================================================
+   НОРМАЛИЗАЦИЯ
+   ============================================================ */
+function normalize(s){
+  return String(s)
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/,/g, '.')
+    .replace(/[−–—]/g, '-')
+    .replace(/×|·|\*/g, '')
+    .replace(/[°]/g, '')
+    .replace(/(см|градусов|градуса|градус)/g, '')
+    .replace(/\^2/g, '²')
+    .replace(/\^3/g, '³')
+    .replace(/\^4/g, '⁴')
+    .replace(/\^5/g, '⁵')
+    .replace(/\^6/g, '⁶')
+    .replace(/\^7/g, '⁷')
+    .replace(/\^8/g, '⁸')
+    .replace(/\^9/g, '⁹')
+    .replace(/\^10/g, '¹⁰')
+    .replace(/\^12/g, '¹²');
+}
+
+function checkNumber(input, expected, tol=0.01){
+  const n = parseFloat(String(input).replace(/\s/g,'').replace(/,/g,'.').replace(/[°см]/g,''));
+  return !isNaN(n) && Math.abs(n - expected) < tol;
+}
+
+function checkExpr(input, variants){
+  const n = normalize(input);
+  if(!n) return false;
+  return variants.some(v => normalize(v) === n);
+}
+
+/* ============================================================
+   LOCALSTORAGE
+   ============================================================ */
+function save(){
+  try{
+    localStorage.setItem('algebra78', JSON.stringify({
+      progress: state.progress,
+      score: state.score,
+      errors: state.errors,
+      solvedCount: state.solvedCount
+    }));
+  }catch(e){}
+}
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem('algebra78') || '{}');
+    if(d.progress) state.progress = d.progress;
+    state.score = d.score || 0;
+    state.errors = d.errors || 0;
+    state.solvedCount = d.solvedCount || 0;
+  }catch(e){}
+}
+
+/* ============================================================
+   ПОДСЧЁТ ОБЩЕГО ЧИСЛА ЗАДАЧ
+   ============================================================ */
+function totalTasks(){
+  let t = 0;
+  Object.values(SHEETS).forEach(s => s.blocks.forEach(b => t += b.tasks.length));
+  return t;
+}
+
+/* ============================================================
+   ОБНОВЛЕНИЕ HUD
+   ============================================================ */
+function updateHUD(){
+  document.getElementById('hScore').textContent = state.score;
+  document.getElementById('hSolved').textContent = state.solvedCount;
+  document.getElementById('hErrors').textContent = state.errors;
+  const total = totalTasks();
+  document.getElementById('pLabel').textContent = state.solvedCount + ' / ' + total;
+  document.getElementById('pFill').style.width = (state.solvedCount / total * 100) + '%';
+}
+
+/* ============================================================
+   ТАБЫ
+   ============================================================ */
+function renderTabs(){
+  const t = document.getElementById('tabs');
+  t.innerHTML = '';
+  Object.entries(SHEETS).forEach(([key, sheet])=>{
+    let solvedHere = 0, totalHere = 0;
+    sheet.blocks.forEach((b, bi)=>{
+      b.tasks.forEach((_, ti)=>{
+        totalHere++;
+        if(state.progress[key + '-' + bi + '-' + ti]) solvedHere++;
+      });
+    });
+    const el = document.createElement('div');
+    el.className = 'tab' + (state.currentSheet === key ? ' active' : '');
+    el.innerHTML = `${sheet.icon} ${sheet.name} <span class="cnt">${solvedHere}/${totalHere}</span>`;
+    el.onclick = ()=>{ state.currentSheet = key; renderTabs(); renderStage(); };
+    t.appendChild(el);
+  });
+}
+
+/* ============================================================
+   РЕНДЕР ЛИСТА
+   ============================================================ */
+function renderStage(){
+  const stage = document.getElementById('stage');
+  const sheet = SHEETS[state.currentSheet];
+
+  let solvedHere = 0, totalHere = 0;
+  sheet.blocks.forEach((b, bi)=>{
+    b.tasks.forEach((_, ti)=>{
+      totalHere++;
+      if(state.progress[state.currentSheet + '-' + bi + '-' + ti]) solvedHere++;
+    });
+  });
+
+  stage.innerHTML = `
+    <div class="panel">
+      <h2>${sheet.icon} ${sheet.name}</h2>
+      <p class="sub">Решено: ${solvedHere} из ${totalHere}. Введи ответ и нажми «Проверить» или Enter.</p>
+      <div id="blocksContainer"></div>
+    </div>
+  `;
+
+  const container = document.getElementById('blocksContainer');
+
+  sheet.blocks.forEach((block, bi)=>{
+    const blockDiv = document.createElement('div');
+    blockDiv.className = 'block';
+
+    let blockSolved = 0;
+    block.tasks.forEach((_, ti)=>{
+      if(state.progress[state.currentSheet + '-' + bi + '-' + ti]) blockSolved++;
+    });
+
+    blockDiv.innerHTML = `
+      <div class="block-title">
+        ${block.name}
+        <span class="bcount">${blockSolved}/${block.tasks.length}</span>
+      </div>
+      <div class="tasks" id="tasks-${bi}"></div>
+    `;
+    container.appendChild(blockDiv);
+
+    const tasksEl = blockDiv.querySelector(`#tasks-${bi}`);
+
+    block.tasks.forEach((task, ti)=>{
+      const key = state.currentSheet + '-' + bi + '-' + ti;
+      const done = state.progress[key];
+      const taskDiv = document.createElement('div');
+      taskDiv.className = 'task' + (done ? ' solved' : '');
+      taskDiv.innerHTML = `
+        <div class="task-n">${done ? '✓' : ti+1}</div>
+        <div class="task-body">
+          <div class="task-q">${task.q}</div>
+          <div class="task-row">
+            <input type="text" class="task-input"
+              placeholder="Введи ответ..."
+              value="${done ? '✓' : ''}"
+              ${done ? 'disabled' : ''}
+              data-key="${key}"
+              data-type="${block.type}"
+              data-ti="${ti}">
+            <button class="check-btn" ${done ? 'disabled' : ''} data-key="${key}" data-type="${block.type}" data-ti="${ti}" data-bi="${bi}">
+              ${done ? '✓' : 'Проверить'}
+            </button>
+          </div>
+          <div class="fb" id="fb-${bi}-${ti}"></div>
+        </div>
+      `;
+      tasksEl.appendChild(taskDiv);
+    });
+  });
+
+  // Обработчики
+  container.querySelectorAll('.check-btn').forEach(btn=>{
+    if(btn.disabled) return;
+    btn.onclick = ()=> handleCheck(btn);
+  });
+
+  container.querySelectorAll('.task-input').forEach(inp=>{
+    if(inp.disabled) return;
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter') inp.parentElement.querySelector('.check-btn').click();
+    });
+  });
+}
+
+/* ============================================================
+   ПРОВЕРКА ОТВЕТА
+   ============================================================ */
+function handleCheck(btn){
+  const key = btn.dataset.key;
+  const type = btn.dataset.type;
+  const bi = +btn.dataset.bi;
+  const ti = +btn.dataset.ti;
+
+  const input = btn.parentElement.querySelector('.task-input');
+  const fb = document.getElementById('fb-' + bi + '-' + ti);
+  const task = SHEETS[state.currentSheet].blocks[bi].tasks[ti];
+
+  let ok = false;
+  if(type === 'number'){
+    ok = checkNumber(input.value, task.ans);
+  } else {
+    ok = checkExpr(input.value, task.ans);
+  }
+
+  fb.classList.add('show');
+
+  if(ok){
+    soundOk();
+    fb.className = 'fb ok show';
+    fb.textContent = '✅ Верно! +10 XP';
+    input.disabled = true;
+    btn.disabled = true;
+    btn.textContent = '✓';
+    input.closest('.task').classList.add('solved');
+    input.closest('.task').querySelector('.task-n').textContent = '✓';
+    state.progress[key] = true;
+    state.score += 10;
+    state.solvedCount++;
+    toast('✅ +10 XP', 'ok');
+    save();
+    updateHUD();
+    renderTabs();
+    // Обновить счётчики в блоке
+    updateBlockCounters();
+    // Проверка полного прохождения
+    if(state.solvedCount === totalTasks()) showFinal();
+  } else {
+    soundErr();
+    fb.className = 'fb err show';
+    fb.innerHTML = `❌ Попробуй ещё. <span class="hint">💡 ${task.hint || ''}</span>`;
+    input.classList.add('err');
+    setTimeout(()=>input.classList.remove('err'), 400);
+    state.errors++;
+    save();
+    updateHUD();
+  }
+}
+
+function updateBlockCounters(){
+  const sheet = SHEETS[state.currentSheet];
+  sheet.blocks.forEach((block, bi)=>{
+    let solved = 0;
+    block.tasks.forEach((_, ti)=>{
+      if(state.progress[state.currentSheet + '-' + bi + '-' + ti]) solved++;
+    });
+    const el = document.querySelector(`#blocksContainer .block:nth-child(${bi+1}) .bcount`);
+    if(el) el.textContent = solved + '/' + block.tasks.length;
+  });
+}
+
+/* ============================================================
+   ФИНАЛЬНЫЙ ЭКРАН
+   ============================================================ */
+function showFinal(){
+  const stage = document.getElementById('stage');
+  stage.innerHTML = `
+    <div class="final">
+      <div class="trophy">🏆</div>
+      <h2>Все задачи решены!</h2>
+      <p style="color:var(--gray);font-size:14px;margin-bottom:8px">
+        Ты прошёл все три листа — от выражений до формул сокращённого умножения.
+      </p>
+      <div class="score-big">${state.score} XP</div>
+      <p style="color:var(--gray);font-size:13px">
+        Ошибок: ${state.errors} · Задач: ${state.solvedCount}
+      </p>
+      <div style="margin-top:20px">
+        <button class="btn" onclick="resetAll()">🔄 Пройти заново</button>
+      </div>
+    </div>
+  `;
+  beep(523);setTimeout(()=>beep(659),100);setTimeout(()=>beep(784),200);setTimeout(()=>beep(1047,0.25),320);
+}
+
+/* ============================================================
+   СБРОС
+   ============================================================ */
+function resetAll(){
+  if(!confirm('Сбросить весь прогресс?')) return;
+  state.progress = {};
+  state.score = 0;
+  state.errors = 0;
+  state.solvedCount = 0;
+  try{ localStorage.removeItem('algebra78'); }catch(e){}
+  updateHUD();
+  renderTabs();
+  renderStage();
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function toast(msg, type){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 1500);
+}
+
+/* ============================================================
+   СТАРТ
+   ============================================================ */
+load();
+updateHUD();
+renderTabs();
+renderStage();
+</script>
+
+</body>
+</html>
